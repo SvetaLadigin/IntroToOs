@@ -125,8 +125,12 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
   else if (firstWord.compare("bg") == 0){
       return new BackgroundCommand(cmd_line);
   }
-//  else if (firstWord.compare("quit") == 0){
-//      return new QuitCommand(cmd_line);
+    if((string(cmd_line).find('>')!=string::npos)|| (string(cmd_line).find(">>")!=string::npos)){
+        return new RedirectionCommand(cmd_line);
+    }
+    else if((string(cmd_line).find('|')!=string::npos)||(string(cmd_line).find("|&")!=string::npos)){
+        return new PipeCommand(cmd_line);
+    }
 
   else {
     return new ExternalCommand(cmd_line);
