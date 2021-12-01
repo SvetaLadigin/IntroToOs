@@ -98,13 +98,13 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
   string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
   SmallShell &smash = SmallShell::getInstance();
 
-  if((string(cmd_line).find('>')!=string::npos)|| (string(cmd_line).find(">>")!=string::npos)){
-        return new RedirectionCommand(cmd_line);
-    }
-  else if((string(cmd_line).find('|')!=string::npos)||(string(cmd_line).find("|&")!=string::npos)){
-        return new PipeCommand(cmd_line);
-    }
-  else if (firstWord.compare("chprompt") == 0) {
+//  if((string(cmd_line).find('>')!=string::npos)|| (string(cmd_line).find(">>")!=string::npos)){
+//        return new RedirectionCommand(cmd_line);
+//    }
+//  else if((string(cmd_line).find('|')!=string::npos)||(string(cmd_line).find("|&")!=string::npos)){
+//        return new PipeCommand(cmd_line);
+//    }
+  if (firstWord.compare("chprompt") == 0) {
     return new ChangePromptCommand(this, cmd_line);
   }
   else if (firstWord.compare("showpid") == 0) {
