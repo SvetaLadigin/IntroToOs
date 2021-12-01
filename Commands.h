@@ -14,6 +14,7 @@ class Command {
   const char* cmd_line;
   char* args[COMMAND_MAX_ARGS] = {NULL};
   bool background = false;
+  int argc{};
  public:
   Command(const char* cmd_line);
   virtual ~Command(){};
@@ -26,15 +27,18 @@ class Command {
   void setAsBackground() {background = true;}
   bool isBackground() {return background;}
   bool isForeground() {return !background;}
+  int getArgc();
 };
 
 class BuiltInCommand : public Command {
+    int argc();
  public:
   BuiltInCommand(const char* cmd_line);
   virtual ~BuiltInCommand() {}
 };
 
 class ExternalCommand : public Command {
+    int argc();
  public:
   ExternalCommand(const char* cmd_line);
   virtual ~ExternalCommand() {}
@@ -91,19 +95,20 @@ class JobsList {
       bool active_status;
       string command;
   public:
-      JobEntry(string cmd, pid_t pid, int job_id, bool active_status = false) //Constructor
+      JobEntry(string cmd, pid_t pid, int job_id, bool active_status = true) //Constructor
       {
           command = cmd;
           job_id = job_id;
           job_pid = pid;
           start_time = time(nullptr);
-          active_status= active_status;
+          active_status=active_status;
       }
       ~JobEntry();
       pid_t getPID();
       int getJobId();
       bool getActiveStatus();
       void setActiveStatus(bool status);
+      void setJobId(int id);
       string getCmd();
       time_t getTime();
       void resetTheTime();
@@ -123,12 +128,14 @@ class JobsList {
 //  void addJob(Command* cmd, bool isStopped = false) const;
   void printJobsList();
   void killAllJobs();
+  void killAllJobNotPrint();
   void removeFinishedJobs();
   JobEntry * getJobById(int jobId);
   void removeJobById(int jobId);
-  JobEntry * getLastJob(int* lastJobId);
-  JobEntry *getLastStoppedJob(int *jobId);
+  JobEntry * getLastJob();
+  JobEntry *getLastStoppedJob();
   int getMaxId();
+  int getNumOfJobs();
   void setMaxId(int new_id);
   void addJob(string cmd, pid_t pid, bool active_status = true);
   // TODO: Add extra methods or modify exisitng ones as needed
@@ -154,7 +161,8 @@ class KillCommand : public BuiltInCommand {
 class ForegroundCommand : public BuiltInCommand {
  // TODO: Add your data members
  public:
-  ForegroundCommand(const char* cmd_line, JobsList* jobs);
+    explicit ForegroundCommand(const char* cmd_line);
+  ForegroundCommand(const char *cmdLine, const char *cmd_line, JobsList *jobs);
   virtual ~ForegroundCommand() {}
   void execute() override;
 };
@@ -162,6 +170,7 @@ class ForegroundCommand : public BuiltInCommand {
 class BackgroundCommand : public BuiltInCommand {
  // TODO: Add your data members
  public:
+    explicit BackgroundCommand(const char* cmd_line);
   BackgroundCommand(const char* cmd_line, JobsList* jobs);
   virtual ~BackgroundCommand() {}
   void execute() override;
@@ -209,6 +218,9 @@ class SmallShell {
   JobsList getJobList();
   pid_t getCurrPid();
   pid_t getSmashPid();
+  string getCurrCmd();
+  void setCurrPid(pid_t pid);
+  void setCurrCmd(string cmd);
 
 };
 
