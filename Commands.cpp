@@ -98,7 +98,13 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
   string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
   SmallShell &smash = SmallShell::getInstance();
 
-  if (firstWord.compare("chprompt") == 0) {
+  if((string(cmd_line).find('>')!=string::npos)|| (string(cmd_line).find(">>")!=string::npos)){
+        return new RedirectionCommand(cmd_line);
+    }
+  else if((string(cmd_line).find('|')!=string::npos)||(string(cmd_line).find("|&")!=string::npos)){
+        return new PipeCommand(cmd_line);
+    }
+  else if (firstWord.compare("chprompt") == 0) {
     return new ChangePromptCommand(this, cmd_line);
   }
   else if (firstWord.compare("showpid") == 0) {
@@ -125,12 +131,7 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
   else if (firstWord.compare("bg") == 0){
       return new BackgroundCommand(cmd_line);
   }
-    if((string(cmd_line).find('>')!=string::npos)|| (string(cmd_line).find(">>")!=string::npos)){
-        return new RedirectionCommand(cmd_line);
-    }
-    else if((string(cmd_line).find('|')!=string::npos)||(string(cmd_line).find("|&")!=string::npos)){
-        return new PipeCommand(cmd_line);
-    }
+
 
   else {
     return new ExternalCommand(cmd_line);
