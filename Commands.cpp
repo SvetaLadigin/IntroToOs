@@ -193,6 +193,10 @@ void SmallShell::setCurrCmd(string cmd) {
     this->currCmd=std::move(cmd);
 }
 
+string SmallShell::getCurrCmd() {
+    return this->currCmd;
+}
+
 
 Command::Command(const char* cmd_line) : cmd_line(cmd_line){};
 
