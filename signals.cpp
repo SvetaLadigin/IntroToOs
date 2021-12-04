@@ -1,46 +1,54 @@
 #include <iostream>
-#include <csignal>
+#include <signal.h>
 #include "signals.h"
 #include "Commands.h"
-#include <cstring>
+ #include <unistd.h>
 
 using namespace std;
-extern SmallShell& smash;
 
 void ctrlZHandler(int sig_num) {
-    SmallShell &smash = SmallShell::getInstance();
-    cout << "smash: got ctrl-Z" << endl;
-    pid_t pid = smash.getCurrPid();
 
-    if(pid <= 0) return; //not succeed
+    SmallShell& smash = SmallShell::getInstance();
 
-    //sending signal
-    if(killpg(pid,SIGSTOP)==-1){
-        perror("smash error: stop failed");
-        return;
+    std::cout << "smash: got ctrl-Z" << endl;
+    if(smash.getCurrPid()!= -1) {
+        if(killpg(smash.getCurrPid(), SIGSTOP) == -1) {
+            perror("smash error: kill failed");
+            return;
+        }
+
+        std::cout << "smash: process " << smash.getCurrPid() << " was stopped" << endl;
+
+        if(JobsList::JobEntry* jobs = smash.getJobsListRef().getJobByPid(smash.getCurrPid())) {
+            jobs->setActiveStatus(false);
+            jobs->resetTheTime();
+        } else {
+            smash.getJobsListRef().addJob(smash.getCurrCmd(), smash.getCurrPid(), false);
+        }
+        smash.setCurrPid(-1);
+        smash.setCurrCmd("");
     }
 
-    char tmp_cmd[COMMAND_ARGS_MAX_LENGTH];
-    strcpy(tmp_cmd, smash.getCurrCmd().c_str());
-    JobsList::JobEntry* job = smash.getJobsListRef().getJobByPid(pid);
-
-    if(job != nullptr){  //already in the list
-        cerr << "smash: process " << pid << " was in backgroung" << endl;
-        return;
-    }
-    else{ //not on jobs list
-        smash.getJobsListRef().addJob(tmp_cmd, pid, false);
-    }
-
-    cout << "smash: process " << pid << " was stopped" << endl;
 }
-
 
 void ctrlCHandler(int sig_num) {
-  // TODO: Add your implementation
+
+    SmallShell& smash = SmallShell::getInstance();
+
+    std::cout << "smash: got ctrl-C" << endl;
+    if(smash.getCurrPid()!= -1) {
+        if(killpg(smash.getCurrPid(), SIGKILL) ==-1) {
+            perror("smash error: kill failed");
+            return;
+        }
+
+        if(smash.getJobsListRef().getJobByPid(smash.getCurrPid()))
+            smash.getJobsListRef().removeJobById(smash.getJobsListRef().getJobByPid(smash.getCurrPid())->getJobId());
+        std::cout << "smash: process " << smash.getCurrPid() << " was killed" << endl;
+        smash.setCurrPid(-1);
+        smash.setCurrCmd("");
+    }
+
 }
 
-void alarmHandler(int sig_num) {
-  // TODO: Add your implementation
-}
-
+void alarmHandler(int sig_num) {}

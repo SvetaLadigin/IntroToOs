@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <cstring>
 #include <list>
 
 #define COMMAND_ARGS_MAX_LENGTH (200)
@@ -10,8 +11,8 @@
 using namespace std;
 
 class Command {
-// TODO: Add your data members
   const char* cmd_line;
+  char og_cmd_line[COMMAND_ARGS_MAX_LENGTH];
   char* args[COMMAND_MAX_ARGS] = {NULL};
   bool background = false;
   int argc{};
@@ -21,13 +22,14 @@ class Command {
   virtual void execute() = 0;
   virtual void prepare();
   virtual void cleanup();
-  // TODO: Add your extra methods if needed
   const char* getCmdLine() {return cmd_line;}
   char** getArgs() {return args;}
   void setAsBackground() {background = true;}
   bool isBackground() {return background;}
   bool isForeground() {return !background;}
   int getArgc();
+  const char* getOgCmdLine() {return og_cmd_line;}
+  void setOgCmdLine(const char* line) {strcpy(og_cmd_line, line);}
 };
 
 class BuiltInCommand : public Command {
@@ -46,26 +48,31 @@ class ExternalCommand : public Command {
 };
 
 class PipeCommand : public Command {
-  // TODO: Add your data members
+  string pipe_args[2];
+  bool toStderr = false;
+  int pipe_fd[2];
  public:
   PipeCommand(const char* cmd_line);
   virtual ~PipeCommand() {}
   void execute() override;
+  void prepare() override;
 };
 
 class RedirectionCommand : public Command {
- // TODO: Add your data members
+  string redir_args[2];
+  bool append = false;
+  int stdout_backup;
+  int new_fd;
  public:
   explicit RedirectionCommand(const char* cmd_line);
   virtual ~RedirectionCommand() {}
   void execute() override;
-  //void prepare() override;
-  //void cleanup() override;
+  void prepare() override;
+  void cleanup() override;
 };
 
 class ChangeDirCommand : public BuiltInCommand {
  public:
-// TODO: Add your data members public:
     std::string* prevPwd;
   ChangeDirCommand(const char* cmd_line, std::string* prevPwd);
   virtual ~ChangeDirCommand() {}
@@ -103,7 +110,7 @@ class JobsList {
           start_time = time(nullptr);
           active_status=active_status;
       }
-      ~JobEntry();
+      ~JobEntry() = default;
       pid_t getPID();
       int getJobId();
       bool getActiveStatus();
@@ -116,7 +123,6 @@ class JobsList {
 
     list<JobEntry*>* jobs_list;
     int max_id;
- // TODO: Add your data members
  public:
 
     JobsList(){
@@ -125,7 +131,6 @@ class JobsList {
 
     };
     ~JobsList();
-//  void addJob(Command* cmd, bool isStopped = false) const;
   void printJobsList();
   void killAllJobs();
   void killAllJobNotPrint();
@@ -138,12 +143,10 @@ class JobsList {
   int getNumOfJobs();
   void setMaxId(int new_id);
   void addJob(string cmd, pid_t pid, bool active_status = true);
-  // TODO: Add extra methods or modify exisitng ones as needed
     JobEntry *getJobByPid(pid_t jobPid);
 };
 
 class JobsCommand : public BuiltInCommand {
- // TODO: Add your data members
  public:
   JobsCommand(const char* cmd_line);
   virtual ~JobsCommand() {}
@@ -151,7 +154,6 @@ class JobsCommand : public BuiltInCommand {
 };
 
 class KillCommand : public BuiltInCommand {
- // TODO: Add your data members
  public:
   KillCommand(const char *cmd_line);
   virtual ~KillCommand() {}
@@ -159,7 +161,6 @@ class KillCommand : public BuiltInCommand {
 };
 
 class ForegroundCommand : public BuiltInCommand {
- // TODO: Add your data members
  public:
     explicit ForegroundCommand(const char* cmd_line);
   ForegroundCommand(const char *cmdLine, const char *cmd_line, JobsList *jobs);
@@ -168,7 +169,6 @@ class ForegroundCommand : public BuiltInCommand {
 };
 
 class BackgroundCommand : public BuiltInCommand {
- // TODO: Add your data members
  public:
     explicit BackgroundCommand(const char* cmd_line);
   BackgroundCommand(const char* cmd_line, JobsList* jobs);
@@ -177,6 +177,9 @@ class BackgroundCommand : public BuiltInCommand {
 };
 
 class HeadCommand : public BuiltInCommand {
+    int numOfLines = 10;
+    bool N_flag = false;
+    int new_fd;
  public:
   HeadCommand(const char* cmd_line);
   virtual ~HeadCommand() {}
@@ -186,14 +189,13 @@ class HeadCommand : public BuiltInCommand {
 
 class SmallShell {
  private:
- // TODO: Add your data members
     std::string prompt = "smash";
     std::string prevPwd = "";
     bool quit = false;
     JobsList jobs;
     pid_t smashPid;
-    pid_t currPid;
-    string currCmd;
+    pid_t currPid = -1;
+    string currCmd = "";
   SmallShell();
  public:
   Command *CreateCommand(const char* cmd_line);
@@ -218,7 +220,7 @@ class SmallShell {
   JobsList getJobList();
   pid_t getCurrPid();
   pid_t getSmashPid();
-  string getCurrCmd();
+  string getCurrCmd() {return currCmd;};
   void setCurrPid(pid_t pid);
   void setCurrCmd(string cmd);
 
@@ -237,7 +239,6 @@ class QuitCommand : public BuiltInCommand {
   JobsList* jobs;
   SmallShell* smash;
  public:
-// TODO: Add your data members public:
   QuitCommand(const char* cmd_line, JobsList* jobs, SmallShell* smash);
   virtual ~QuitCommand() {}
   void execute() override;
