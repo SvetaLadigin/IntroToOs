@@ -362,7 +362,7 @@ void JobsList::printJobsList() {
         auto it = jobs_list->begin();
         while(it != jobs_list->end())
         {
-            std::cout << (*it)->getActiveStatus()<<endl;
+
             //check active status
             if((*it)->getActiveStatus()){
                 std::cout << "[" << (*it)->getJobId() << "] " << (*it)->getCmd() << " : " << (*it)->getPID() << " " << difftime(time(nullptr), (*it)->getTime())<<" secs" << endl;
