@@ -337,8 +337,9 @@ void ExternalCommand::execute() {
 void JobsList::addJob(string cmd, pid_t pid, bool active_status) {
     //getting the instance
     SmallShell &smash = SmallShell::getInstance();
+    removeFinishedJobs();
     int curr_jobid = smash.getJobsListRef().getMaxId(); //getting the max id to add to the job list
-    int new_job_id = curr_jobid+1;
+    int new_job_id = getMaxId()+1;
     auto* new_job = new JobEntry(std::move(cmd), pid,new_job_id ,active_status); //new job entry
     new_job->setActiveStatus(active_status);
     new_job->setJobId(new_job_id);
@@ -362,7 +363,6 @@ void JobsList::printJobsList() {
         auto it = jobs_list->begin();
         while(it != jobs_list->end())
         {
-
             //check active status
             if((*it)->getActiveStatus()){
                 std::cout << "[" << (*it)->getJobId() << "] " << (*it)->getCmd() << " : " << (*it)->getPID() << " " << difftime(time(nullptr), (*it)->getTime())<<" secs" << endl;
@@ -396,10 +396,11 @@ void JobsList::killAllJobs() {
 }
 
 void JobsList::removeFinishedJobs() {
+    int max_id=0;
+    int currjob_id=0;
     if(!jobs_list->empty())
     {
         auto it = jobs_list->begin();
-
         while((it != jobs_list->end()) && (!jobs_list->empty()))
         {
             pid_t pid = (*it)->getPID();
@@ -412,10 +413,15 @@ void JobsList::removeFinishedJobs() {
                 jobs_list->erase(temp);
             }
             else{
+                currjob_id = (*it)->getJobId();
+                if(currjob_id>max_id){
+                    max_id = currjob_id;
+                }
                 it++;
             }
         }
     }
+    setMaxId(max_id);
     if(jobs_list->empty())
         setMaxId(0);
 }
@@ -613,7 +619,6 @@ bool onlyDigits(const std::string &str){return str.find_first_not_of("-012345678
 
 // helper func for checking input
 bool chackInputForKill(KillCommand *k){
-    if (k->getArgc()==1) return false;
     if(k->getArgc()>3) return false;
     bool first_args = onlyDigits(k->getArgs()[1]);
     if(!first_args) return false;
