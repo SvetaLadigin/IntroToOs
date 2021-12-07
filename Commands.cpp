@@ -613,6 +613,7 @@ bool onlyDigits(const std::string &str){return str.find_first_not_of("-012345678
 
 // helper func for checking input
 bool chackInputForKill(KillCommand *k){
+    if (k->getArgc()==1) return false;
     if(k->getArgc()>3) return false;
     bool first_args = onlyDigits(k->getArgs()[1]);
     if(!first_args) return false;
